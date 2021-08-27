@@ -16,11 +16,12 @@ export class RatingResolver {
 		@Ctx() { req }: MyContext
 	): Promise<BoolWithMessageResponse> {
 		const userId  = req.session.userId;
-		console.log("userId: " + userId)
+		
 		const rating = await Rating.findOne({
 			where: { animeId, userId },
 		});
 
+		
 		// user hasn't rated yet
 		if (!rating) {
 			await getConnection().transaction(async (tm) => {

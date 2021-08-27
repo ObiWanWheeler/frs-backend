@@ -14,7 +14,7 @@ import { Rating } from "./Ratings";
 @Entity()
 export class User extends BaseEntity {
 	@Field(() => Int)
-	@PrimaryGeneratedColumn()
+	@PrimaryGeneratedColumn({ name: "user_id" })
 	id!: number;
 
 	@Field(() => String)

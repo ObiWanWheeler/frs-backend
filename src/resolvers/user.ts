@@ -31,13 +31,16 @@ export class UserResolver {
 
 	@Query(() => UserResponse)
 	async me(@Ctx() { req }: MyContext): Promise<UserResponse> {
-		if (!req.session.userId) {
+		const userId = req.session.userId;
+
+		if (!userId) {
 			return {
 				errors: [{ message: "no userID found in session" }],
 			};
 		}
 
-		const user = await User.findOne(req.session.userId);
+		const user = await User.findOne({ where: { id: userId }, relations: ['ratings']}); // left joins with rating table
+
 		return user
 			? { user: user }
 			: { errors: [{ message: "error fetching user" }] };

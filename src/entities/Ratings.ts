@@ -4,7 +4,7 @@ import { User } from "./User";
 import { Anime } from "./Anime";
 
 @ObjectType()
-@Entity({name: "rating"}) 
+@Entity() 
 export class Rating extends BaseEntity {
 	@Field(() => Int)
 	@Column({name: "rating"})
@@ -18,7 +18,6 @@ export class Rating extends BaseEntity {
 	@PrimaryColumn({name: "anime_id"})
 	animeId!: number;
 
-	@Field(() => User)
 	@ManyToOne(() => User,(user) => user.ratings)
     @JoinColumn({ name: "user_id" })
 	user: User;

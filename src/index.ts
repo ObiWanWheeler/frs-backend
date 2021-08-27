@@ -27,9 +27,10 @@ const main = async () => {
 		password: "DivineHD1",
 		logging: true,
 		synchronize: !__prod__,
-		migrations: [path.join(__dirname, "./migrations/*")],
+		migrations: [path.join(__dirname, "./migrations/**/*.ts")],
 		entities: [User, Anime, Rating],
 	});
+
 	conn.runMigrations();
 
 	const mailer = await createMailerClient();

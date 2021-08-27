@@ -5,15 +5,17 @@ import {
 	CreateDateColumn,
 	UpdateDateColumn,
 	BaseEntity,
+	OneToMany
 } from "typeorm";
 import { Field, Float, Int, ObjectType } from "type-graphql";
+import { Rating } from "./Ratings";
 
 @ObjectType()
 @Entity({name:"anime", synchronize: false})
 export class Anime extends BaseEntity {
 	@Field(() => Int)
-	@PrimaryGeneratedColumn()
-	anime_id!: number;
+	@PrimaryGeneratedColumn({ name: "anime_id" })
+	animeId!: number;
 
 	@Field(() => String)
 	@Column({ unique: true })
@@ -38,6 +40,10 @@ export class Anime extends BaseEntity {
 	@Field(() => Int)
 	@Column()
 	members!: number;
+
+	@Field(() => [Rating])
+	@OneToMany(() => Rating, (rating) => rating.anime)
+	ratings!: Rating[]
 
 	@Field(() => String)
 	@CreateDateColumn()

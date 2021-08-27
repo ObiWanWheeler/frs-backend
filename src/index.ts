@@ -16,6 +16,8 @@ import path from "path";
 import { createUserLoader } from "./utils/UserLoader";
 import { Anime } from "./entities/Anime";
 import { AnimeResolver } from "./resolvers/anime";
+import { Rating } from "./entities/Ratings";
+import { RatingResolver } from "./resolvers/ratings";
 
 const main = async () => {
 	const conn = await createConnection({
@@ -26,7 +28,7 @@ const main = async () => {
 		logging: true,
 		synchronize: !__prod__,
 		migrations: [path.join(__dirname, "./migrations/*")],
-		entities: [User, Anime],
+		entities: [User, Anime, Rating],
 	});
 	conn.runMigrations();
 
@@ -63,7 +65,7 @@ const main = async () => {
 
 	const apolloServer = new ApolloServer({
 		schema: await buildSchema({
-			resolvers: [UserResolver, AnimeResolver],
+			resolvers: [UserResolver, AnimeResolver, RatingResolver],
 			validate: false,
 		}),
 		context: ({ req, res }): MyContext => ({

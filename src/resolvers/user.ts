@@ -1,4 +1,5 @@
-import { User } from "../entities/User";
+import argon2 from "argon2";
+import nodemailer from "nodemailer";
 import { MyContext } from "src/types";
 import {
 	Arg,
@@ -7,24 +8,32 @@ import {
 	Mutation,
 	Query,
 	Resolver,
-	Root,
+	Root
 } from "type-graphql";
-import argon2 from "argon2";
-import { COOKIE_NAME, FORGOT_PASSWORD_PREFIX, FRONT_END_URL } from "../constants";
-import nodemailer from "nodemailer";
-import { validateRegister } from "../utils/validateRegister";
 import { v4 } from "uuid";
-import { RegisterInput, UsernamePasswordInput } from "../typeorm-types/input-types";
-import { UserResponse, BoolWithMessageResponse, ChangePasswordResponse } from "../typeorm-types/object-types";
+import {
+	COOKIE_NAME,
+	FORGOT_PASSWORD_PREFIX,
+	FRONT_END_URL
+} from "../constants";
+import { User } from "../entities/User";
+import {
+	RegisterInput,
+	UsernamePasswordInput
+} from "../typeorm-types/input-types";
+import {
+	BoolWithMessageResponse,
+	ChangePasswordResponse, UserResponse
+} from "../typeorm-types/object-types";
+import { validateRegister } from "../utils/validateRegister";
 
 @Resolver(User)
 export class UserResolver {
 	@FieldResolver(() => String)
-	email(@Root() root: User, @Ctx() {req}: MyContext) {
+	email(@Root() root: User, @Ctx() { req }: MyContext) {
 		if (req.session.userId === root.id) {
-			return root.email
-		}
-		else {
+			return root.email;
+		} else {
 			return "";
 		}
 	}
@@ -39,7 +48,10 @@ export class UserResolver {
 			};
 		}
 
-		const user = await User.findOne({ where: { id: userId }, relations: ['ratings']}); // left joins with rating table
+		const user = await User.findOne({
+			where: { id: userId },
+			relations: ["ratings"],
+		}); // left joins with rating table
 
 		return user
 			? { user: user }
@@ -72,7 +84,6 @@ export class UserResolver {
 			return {
 				user,
 			};
-
 		} catch (err) {
 			// user already registered
 			if (err.code === "23505" || err.detail.includes("already exists")) {
@@ -174,8 +185,7 @@ export class UserResolver {
 		let mailInfo: any;
 		try {
 			mailInfo = await mailer.sendMail({
-				from:
-					'"RedditClone" Team <redditclone.forgotpass@redditclone.com>',
+				from: '"RedditClone" Team <redditclone.forgotpass@redditclone.com>',
 				to: user.email,
 				subject: "Password Reset",
 				html: `<a href='${FRONT_END_URL}/change_password/${token}'>click here to reset your password</a>`,

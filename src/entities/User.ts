@@ -1,13 +1,7 @@
-import {
-	Entity,
-	Column,
-	PrimaryGeneratedColumn,
-	CreateDateColumn,
-	UpdateDateColumn,
-	BaseEntity,
-	OneToMany,
-} from "typeorm";
 import { Field, Int, ObjectType } from "type-graphql";
+import {
+	BaseEntity, Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn
+} from "typeorm";
 import { Rating } from "./Ratings";
 
 @ObjectType()

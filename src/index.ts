@@ -1,4 +1,3 @@
-import "reflect-metadata";
 import { ApolloServer } from "apollo-server-express";
 import connectRedis from "connect-redis";
 import cors from "cors";
@@ -6,18 +5,19 @@ import express from "express";
 import session from "express-session";
 import Redis from "ioredis";
 import nodemailer from "nodemailer";
+import path from "path";
+import "reflect-metadata";
 import { buildSchema } from "type-graphql";
 import { createConnection } from "typeorm";
 import { COOKIE_NAME, FRONT_END_URL, __prod__ } from "./constants";
+import { Anime } from "./entities/Anime";
+import { Rating } from "./entities/Ratings";
 import { User } from "./entities/User";
+import { AnimeResolver } from "./resolvers/anime";
+import { RatingResolver } from "./resolvers/ratings";
 import { UserResolver } from "./resolvers/user";
 import { MyContext } from "./types";
-import path from "path";
 import { createUserLoader } from "./utils/UserLoader";
-import { Anime } from "./entities/Anime";
-import { AnimeResolver } from "./resolvers/anime";
-import { Rating } from "./entities/Ratings";
-import { RatingResolver } from "./resolvers/ratings";
 
 const main = async () => {
 	const conn = await createConnection({

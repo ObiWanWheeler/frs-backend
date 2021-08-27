@@ -1,9 +1,9 @@
-import { isAuth } from "../middleware/isAuth";
 import { MyContext } from "src/types";
-import { Arg, Ctx, Int, Mutation, UseMiddleware, Resolver } from "type-graphql";
+import { Arg, Ctx, Int, Mutation, Resolver, UseMiddleware } from "type-graphql";
 import { Entity, getConnection } from "typeorm";
-import { BoolWithMessageResponse } from "../typeorm-types/object-types";
 import { Rating } from "../entities/Ratings";
+import { isAuth } from "../middleware/isAuth";
+import { BoolWithMessageResponse } from "../typeorm-types/object-types";
 
 @Entity()
 @Resolver(Rating)
@@ -15,13 +15,12 @@ export class RatingResolver {
 		@Arg("value", () => Int) value: number,
 		@Ctx() { req }: MyContext
 	): Promise<BoolWithMessageResponse> {
-		const userId  = req.session.userId;
-		
+		const userId = req.session.userId;
+
 		const rating = await Rating.findOne({
 			where: { animeId, userId },
 		});
 
-		
 		// user hasn't rated yet
 		if (!rating) {
 			await getConnection().transaction(async (tm) => {
@@ -62,6 +61,6 @@ export class RatingResolver {
 				success: true,
 				message: "rating value changed",
 			};
-		} 
+		}
 	}
 }

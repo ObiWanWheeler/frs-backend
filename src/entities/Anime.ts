@@ -1,17 +1,11 @@
-import {
-	Entity,
-	Column,
-	PrimaryGeneratedColumn,
-	CreateDateColumn,
-	UpdateDateColumn,
-	BaseEntity,
-	OneToMany
-} from "typeorm";
 import { Field, Float, Int, ObjectType } from "type-graphql";
+import {
+	BaseEntity, Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn
+} from "typeorm";
 import { Rating } from "./Ratings";
 
 @ObjectType()
-@Entity({name:"anime", synchronize: false})
+@Entity({ name: "anime", synchronize: false })
 export class Anime extends BaseEntity {
 	@Field(() => Int)
 	@PrimaryGeneratedColumn({ name: "anime_id" })
@@ -43,7 +37,7 @@ export class Anime extends BaseEntity {
 
 	@Field(() => [Rating])
 	@OneToMany(() => Rating, (rating) => rating.anime)
-	ratings!: Rating[]
+	ratings!: Rating[];
 
 	@Field(() => String)
 	@CreateDateColumn()

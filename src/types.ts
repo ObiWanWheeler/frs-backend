@@ -3,7 +3,6 @@ import { Response } from "express";
 import { Session } from "express-session";
 import { Redis } from "ioredis";
 import Mail from "nodemailer/lib/mailer";
-import { Updoot } from "./entities/Updoot";
 import { User } from "./entities/User";
 
 export type MyContext = {
@@ -12,5 +11,4 @@ export type MyContext = {
 	mailer: Mail
 	redisClient: Redis
 	userLoader: DataLoader<number, User>
-	updootLoader: DataLoader<{postId: number, authorId: number}, Updoot | null>
 };

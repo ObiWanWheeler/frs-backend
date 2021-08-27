@@ -10,7 +10,7 @@ import {
 	Root,
 } from "type-graphql";
 import argon2 from "argon2";
-import { COOKIE_NAME, FORGOT_PASSWORD_PREFIX } from "../constants";
+import { COOKIE_NAME, FORGOT_PASSWORD_PREFIX, FRONT_END_URL } from "../constants";
 import nodemailer from "nodemailer";
 import { validateRegister } from "../utils/validateRegister";
 import { v4 } from "uuid";
@@ -175,7 +175,7 @@ export class UserResolver {
 					'"RedditClone" Team <redditclone.forgotpass@redditclone.com>',
 				to: user.email,
 				subject: "Password Reset",
-				html: `<a href='http://localhost:3000/change_password/${token}'>click here to reset your password</a>`,
+				html: `<a href='${FRONT_END_URL}/change_password/${token}'>click here to reset your password</a>`,
 			});
 		} catch {
 			return {

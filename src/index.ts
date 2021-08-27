@@ -8,28 +8,23 @@ import Redis from "ioredis";
 import nodemailer from "nodemailer";
 import { buildSchema } from "type-graphql";
 import { createConnection } from "typeorm";
-import { COOKIE_NAME, __prod__ } from "./constants";
-import { Post } from "./entities/Post";
+import { COOKIE_NAME, FRONT_END_URL, __prod__ } from "./constants";
 import { User } from "./entities/User";
-import { PostResolver } from "./resolvers/post";
 import { UserResolver } from "./resolvers/user";
 import { MyContext } from "./types";
 import path from "path";
-import { Updoot } from "./entities/Updoot";
-import { UpdootResolver } from "./resolvers/updoot";
 import { createUserLoader } from "./utils/UserLoader";
-import { createUpdootLoader } from "./utils/UpdootLoader";
 
 const main = async () => {
 	const conn = await createConnection({
 		type: "postgres",
-		database: "redditclone",
+		database: "filmrecommenderdb",
 		username: "postgres",
 		password: "DivineHD1",
 		logging: true,
 		synchronize: !__prod__,
 		migrations: [path.join(__dirname, "./migrations/*")],
-		entities: [Post, User, Updoot],
+		entities: [User],
 	});
 	conn.runMigrations();
 
@@ -41,7 +36,7 @@ const main = async () => {
 	const redisClient = new Redis();
 	app.use(
 		cors({
-			origin: "http://localhost:3000",
+			origin: FRONT_END_URL,
 			credentials: true,
 		})
 	);
@@ -66,7 +61,7 @@ const main = async () => {
 
 	const apolloServer = new ApolloServer({
 		schema: await buildSchema({
-			resolvers: [PostResolver, UserResolver, UpdootResolver],
+			resolvers: [UserResolver],
 			validate: false,
 		}),
 		context: ({ req, res }): MyContext => ({
@@ -75,7 +70,6 @@ const main = async () => {
 			mailer,
 			redisClient,
 			userLoader: createUserLoader(),
-			updootLoader: createUpdootLoader()
 		}),
 	});
 

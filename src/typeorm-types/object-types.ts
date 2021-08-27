@@ -1,4 +1,3 @@
-import { Post } from "../entities/Post";
 import { User } from "../entities/User";
 import { ObjectType, Field } from "type-graphql";
 
@@ -6,30 +5,6 @@ import { ObjectType, Field } from "type-graphql";
 export class FieldError {
 	@Field()
 	message: string;
-}
-@ObjectType()
-export class PostFieldError extends FieldError {
-	@Field(() => String)
-	field: "title" | "text";
-
-}
-
-@ObjectType()
-export class PostResponse {
-	@Field(() => [PostFieldError], { nullable: true })
-	errors?: PostFieldError[];
-
-	@Field(() => Post, { nullable: true })
-	post?: Post;
-}
-
-@ObjectType()
-export class PostPagination {
-	@Field(() => [Post])
-	posts: Post[]
-
-	@Field(() => Boolean)
-	allFetched: boolean 
 }
 
 @ObjectType()

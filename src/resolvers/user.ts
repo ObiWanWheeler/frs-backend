@@ -233,6 +233,7 @@ export class UserResolver {
 			};
 		}
 
+		// unexpectedly this actually produces fewer SQL statements overall than updating 'user' then flushing
 		await User.update(
 			{ id: userId },
 			{ password: await argon2.hash(newPassword) }

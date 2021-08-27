@@ -14,6 +14,7 @@ import { UserResolver } from "./resolvers/user";
 import { MyContext } from "./types";
 import path from "path";
 import { createUserLoader } from "./utils/UserLoader";
+import { Anime } from "./entities/Anime";
 
 const main = async () => {
 	const conn = await createConnection({
@@ -24,7 +25,7 @@ const main = async () => {
 		logging: true,
 		synchronize: !__prod__,
 		migrations: [path.join(__dirname, "./migrations/*")],
-		entities: [User],
+		entities: [User, Anime],
 	});
 	conn.runMigrations();
 

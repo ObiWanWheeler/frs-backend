@@ -15,6 +15,7 @@ import { MyContext } from "./types";
 import path from "path";
 import { createUserLoader } from "./utils/UserLoader";
 import { Anime } from "./entities/Anime";
+import { AnimeResolver } from "./resolvers/anime";
 
 const main = async () => {
 	const conn = await createConnection({
@@ -62,7 +63,7 @@ const main = async () => {
 
 	const apolloServer = new ApolloServer({
 		schema: await buildSchema({
-			resolvers: [UserResolver],
+			resolvers: [UserResolver, AnimeResolver],
 			validate: false,
 		}),
 		context: ({ req, res }): MyContext => ({

@@ -2,10 +2,12 @@ import { Field, Int, ObjectType } from "type-graphql";
 import {
 	BaseEntity,
 	Column,
+	CreateDateColumn,
 	Entity,
 	JoinColumn,
 	ManyToOne,
-	PrimaryColumn
+	PrimaryColumn,
+	UpdateDateColumn
 } from "typeorm";
 import { Anime } from "./Anime";
 import { User } from "./User";
@@ -33,4 +35,12 @@ export class Rating extends BaseEntity {
 	@ManyToOne(() => Anime, (anime) => anime.ratings, { onDelete: "CASCADE" })
 	@JoinColumn({ name: "anime_id" })
 	anime: Anime;
+
+	@Field(() => String)
+	@CreateDateColumn()
+	createdAt: Date;
+
+	@Field(() => String)
+	@UpdateDateColumn()
+	updatedAt: Date;
 }

@@ -1,5 +1,6 @@
 import argon2 from "argon2";
 import nodemailer from "nodemailer";
+import { Anime } from "../entities/Anime";
 import { MyContext } from "src/types";
 import {
 	Arg,
@@ -8,30 +9,35 @@ import {
 	Mutation,
 	Query,
 	Resolver,
-	Root
+	Root,
 } from "type-graphql";
 import { v4 } from "uuid";
 import {
 	COOKIE_NAME,
 	FORGOT_PASSWORD_PREFIX,
-	FRONT_END_URL
+	FRONT_END_URL,
+	RECOMMENDER_API_BASE_URL,
 } from "../constants";
 import { User } from "../entities/User";
 import {
 	RegisterInput,
-	UsernamePasswordInput
+	UsernamePasswordInput,
 } from "../typeorm-types/input-types";
 import {
 	BoolWithMessageResponse,
-	ChangePasswordResponse, UserResponse
+	ChangePasswordResponse,
+	UserResponse,
 } from "../typeorm-types/object-types";
 import { validateRegister } from "../utils/validateRegister";
+import fetch from 'node-fetch';
+import { plainToClass } from "class-transformer";
+
 
 @Resolver(User)
 export class UserResolver {
 	@FieldResolver(() => String)
 	email(@Root() root: User, @Ctx() { req }: MyContext) {
-		if (req.session.userId === root.id) {
+		if (req.session!.userId === root.id) {
 			return root.email;
 		} else {
 			return "";
@@ -56,6 +62,41 @@ export class UserResolver {
 		return user
 			? { user: user }
 			: { errors: [{ message: "error fetching user" }] };
+	}
+
+	@Query(() => [Anime])
+	async recommend(
+		@Arg("verbose", { nullable: true }) verbose: boolean,
+		@Arg("topn", { nullable: true }) topn: number,
+		@Ctx() { req }: MyContext
+	): Promise<Anime[]> {
+		const userId = req.session.userId;
+
+		if (!userId) {
+			return [];
+		}
+
+		let endpoint = `${RECOMMENDER_API_BASE_URL}hybrid-recommender/${userId}?`;
+
+		if (verbose) {
+			endpoint += `verbose=${verbose}`;
+		}
+
+		if (topn) {
+			endpoint += `&topn=${topn}`;
+		}
+
+		console.log(endpoint)
+
+		const recommendationsResp = await fetch(endpoint);
+
+		const recommendationsJson = await recommendationsResp.json();
+		console.log(recommendationsJson);
+
+		const typedRecommendations: Anime[] = [];
+		recommendationsJson.recommendations.forEach((anime: any) => typedRecommendations.push(plainToClass(Anime, {animeId: anime.anime_id, ...anime})))
+		console.log(typedRecommendations)
+		return typedRecommendations;
 	}
 
 	@Mutation(() => UserResponse)

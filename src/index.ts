@@ -69,12 +69,12 @@ const main = async () => {
 			resolvers: [UserResolver, AnimeResolver, RatingResolver],
 			validate: false,
 		}),
-		context: ({ req, res }): MyContext => ({
+		context: ({ req, res }: any): MyContext => ({
 			req,
 			res,
 			mailer,
 			redisClient,
-			userLoader: createUserLoader(),
+			userLoader: createUserLoader(), 
 		}),
 	});
 

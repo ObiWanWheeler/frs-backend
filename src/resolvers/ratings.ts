@@ -16,6 +16,12 @@ export class RatingResolver {
 		@Ctx() { req }: MyContext
 	): Promise<BoolWithMessageResponse> {
 		const userId = req.session.userId;
+		if (!userId) {
+			return {
+				success: false,
+				message: "No user currently logged in, log in to rate."
+			}
+		}
 
 		const rating = await Rating.findOne({
 			where: { animeId, userId },

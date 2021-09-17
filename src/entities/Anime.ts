@@ -1,8 +1,22 @@
 import { Field, Float, Int, ObjectType } from "type-graphql";
 import {
-	BaseEntity, Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn
+	BaseEntity,
+	Column,
+	CreateDateColumn,
+	Entity,
+	OneToMany,
+	PrimaryGeneratedColumn,
+	UpdateDateColumn,
 } from "typeorm";
 import { Rating } from "./Ratings";
+
+type titleImageType = {
+	tiny: string;
+	large: string;
+	small: string;
+	medium: string;
+	original: string;
+};
 
 @ObjectType()
 @Entity({ name: "anime", synchronize: false })
@@ -35,7 +49,13 @@ export class Anime extends BaseEntity {
 	@Column()
 	members!: number;
 
-	@Field(() => [Rating])
+	@Field(() => String)
+	@Column({ nullable: true })
+	synopsis: string;
+
+	@Column({ name: "titleimage", type: "json", nullable: true })
+	titleImage: titleImageType;
+
 	@OneToMany(() => Rating, (rating) => rating.anime)
 	ratings!: Rating[];
 

@@ -31,6 +31,7 @@ import {
 import { validateRegister } from "../utils/validateRegister";
 import fetch from 'node-fetch';
 import { plainToClass } from "class-transformer";
+import { Rating } from "../entities/Ratings";
 
 
 @Resolver(User)
@@ -42,6 +43,11 @@ export class UserResolver {
 		} else {
 			return "";
 		}
+	}
+
+	@FieldResolver(() => [Rating])
+	ratings(@Root() root: User) {
+		return Rating.find({ where: { userId: root.id }})
 	}
 
 	@Query(() => UserResponse)
@@ -56,8 +62,7 @@ export class UserResolver {
 
 		const user = await User.findOne({
 			where: { id: userId },
-			relations: ["ratings"],
-		}); // left joins with rating table
+		});
 
 		return user
 			? { user: user }

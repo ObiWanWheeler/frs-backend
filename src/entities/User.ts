@@ -30,7 +30,6 @@ export class User extends BaseEntity {
 	@UpdateDateColumn()
 	updatedAt: Date;
 
-	@Field(() => [Rating])
 	@OneToMany(() => Rating, (rating) => rating.user)
 	ratings: Rating[];
 }

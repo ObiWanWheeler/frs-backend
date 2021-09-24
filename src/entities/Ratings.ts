@@ -16,24 +16,24 @@ import { User } from "./User";
 @Entity()
 export class Rating extends BaseEntity {
 	@Field(() => Int)
-	@Column({ name: "rating" })
+	@Column()
 	rating: number;
 
 	@Field(() => Int)
-	@PrimaryColumn({ name: "user_id" })
+	@PrimaryColumn()
 	userId!: number;
 
 	@Field(() => Int)
-	@PrimaryColumn({ name: "anime_id" })
+	@PrimaryColumn()
 	animeId!: number;
 
 	@ManyToOne(() => User, (user) => user.ratings)
-	@JoinColumn({ name: "user_id" })
+	@JoinColumn({ name: "userId" })
 	user: User;
 
 	@Field(() => Anime)
 	@ManyToOne(() => Anime, (anime) => anime.ratings, { onDelete: "CASCADE" })
-	@JoinColumn({ name: "anime_id" })
+	@JoinColumn({ name: "animeId" })
 	anime: Anime;
 
 	@Field(() => String)

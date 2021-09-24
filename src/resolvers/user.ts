@@ -29,16 +29,16 @@ import {
 	UserResponse,
 } from "../typeorm-types/object-types";
 import { validateRegister } from "../utils/validateRegister";
-import fetch from 'node-fetch';
+import fetch from "node-fetch";
 import { plainToClass } from "class-transformer";
 import { Rating } from "../entities/Ratings";
-
+import { getConnection } from "typeorm";
 
 @Resolver(User)
 export class UserResolver {
 	@FieldResolver(() => String)
 	email(@Root() root: User, @Ctx() { req }: MyContext) {
-		if (req.session!.userId === root.id) {
+		if (req.session!.userId === root.userId) {
 			return root.email;
 		} else {
 			return "";
@@ -47,7 +47,9 @@ export class UserResolver {
 
 	@FieldResolver(() => [Rating])
 	ratings(@Root() root: User) {
-		return Rating.find({ where: { userId: root.id }})
+		return getConnection().query(
+			`SELECT * FROM rating WHERE "userId" = ${root.userId}`
+		);
 	}
 
 	@Query(() => UserResponse)
@@ -60,12 +62,12 @@ export class UserResolver {
 			};
 		}
 
-		const user = await User.findOne({
-			where: { id: userId },
-		});
+		const user = await getConnection().query(
+			`SELECT * FROM "user" WHERE "userId" = ${userId}`
+		);
 
 		return user
-			? { user: user }
+			? { user: user[0] }
 			: { errors: [{ message: "error fetching user" }] };
 	}
 
@@ -91,7 +93,7 @@ export class UserResolver {
 			endpoint += `&topn=${topn}`;
 		}
 
-		console.log(endpoint)
+		console.log(endpoint);
 
 		const recommendationsResp = await fetch(endpoint);
 
@@ -99,8 +101,12 @@ export class UserResolver {
 		console.log(recommendationsJson);
 
 		const typedRecommendations: Anime[] = [];
-		recommendationsJson.recommendations.forEach((anime: any) => typedRecommendations.push(plainToClass(Anime, {animeId: anime.anime_id, ...anime})))
-		console.log(typedRecommendations)
+		recommendationsJson.recommendations.forEach((anime: any) =>
+			typedRecommendations.push(
+				plainToClass(Anime, { animeId: anime.anime_id, ...anime })
+			)
+		);
+		console.log(typedRecommendations);
 		return typedRecommendations;
 	}
 
@@ -109,6 +115,43 @@ export class UserResolver {
 		@Arg("options") options: RegisterInput,
 		@Ctx() { req }: MyContext
 	): Promise<UserResponse> {
+		if (
+			(
+				await getConnection().query(
+					`SELECT * FROM "user" WHERE email = '${options.email}'`
+				)
+			)[0]
+		) {
+			// user already registered
+			return {
+				errors: [
+					{
+						field: "email",
+						message:
+							"user with this email already exists! Please try a different email.",
+					},
+				],
+			};
+		}
+
+		if (
+			(
+				await getConnection().query(
+					`SELECT * FROM "user" WHERE username = '${options.username}'`
+				)
+			)[0]
+		) {
+			return {
+				errors: [
+					{
+						field: "username",
+						message:
+							"user with this name already exists! Please choose a different username.",
+					},
+				],
+			};
+		}
+
 		const invalidFields = validateRegister(options);
 		if (invalidFields.length != 0) {
 			return {
@@ -118,20 +161,26 @@ export class UserResolver {
 
 		try {
 			const hashedPassword = await argon2.hash(options.password);
+			const nextId =
+				(
+					await getConnection().query(
+						`SELECT MAX("userId") FROM "user"`
+					)
+				)[0].max + 1;
 
-			const user = await User.create({
-				username: options.username,
-				email: options.email,
-				password: hashedPassword,
-			}).save();
+			const user = (
+				await getConnection().query(
+					`INSERT INTO "user" ("userId", username, email, password) VALUES (${nextId},'${options.username}', '${options.email}', '${hashedPassword}') RETURNING *`
+				)
+			)[0] as User;
 
-			req.session.userId = user.id; //set cookie
+			req.session.userId = user.userId; //set cookie
 
 			return {
 				user,
 			};
 		} catch (err) {
-			// user already registered
+			// for anything previous check missed
 			if (err.code === "23505" || err.detail.includes("already exists")) {
 				return {
 					errors: [
@@ -154,20 +203,15 @@ export class UserResolver {
 		@Arg("options") options: UsernamePasswordInput,
 		@Ctx() { req }: MyContext
 	): Promise<UserResponse> {
-		const requestedUser = await User.findOne(
+		const requestedUser = (await getConnection().query(`SELECT * FROM "user" WHERE 
+		${
 			options.username.includes("@")
-				? {
-						where: {
-							email: options.username,
-						},
-				  }
-				: {
-						where: {
-							username: options.username,
-						},
-				  }
-		);
-		if (!requestedUser?.id) {
+				? `email = '${options.username}'`
+				: `username = '${options.username}'`
+		}`))[0] as User;
+
+
+		if (!requestedUser?.userId) {
 			return {
 				errors: [{ field: "username", message: "error logging in" }],
 			};
@@ -181,7 +225,7 @@ export class UserResolver {
 				errors: [{ field: "username", message: "error logging in" }],
 			};
 		}
-		req.session.userId = requestedUser.id; // set cookie
+		req.session.userId = requestedUser.userId; // set cookie
 
 		return {
 			user: requestedUser,
@@ -211,7 +255,7 @@ export class UserResolver {
 		@Arg("email") email: string,
 		@Ctx() { mailer, redisClient }: MyContext
 	): Promise<BoolWithMessageResponse> {
-		const user = await User.findOne({ where: { email: email } });
+		const user = (await getConnection().query(`SELECT * FROM "user" WHERE email = '${email}'`))[0];
 		if (!user) {
 			return {
 				success: true,
@@ -223,7 +267,7 @@ export class UserResolver {
 		const token = v4();
 		await redisClient.set(
 			FORGOT_PASSWORD_PREFIX + token,
-			user.id,
+			user.userId,
 			"ex",
 			1000 * 60 * 60
 		); // expires after 1 hour
@@ -231,7 +275,7 @@ export class UserResolver {
 		let mailInfo: any;
 		try {
 			mailInfo = await mailer.sendMail({
-				from: '"RedditClone" Team <redditclone.forgotpass@redditclone.com>',
+				from: '"Dev-Chan" <Devchan@cool.com>',
 				to: user.email,
 				subject: "Password Reset",
 				html: `<a href='${FRONT_END_URL}/change_password/${token}'>click here to reset your password</a>`,
@@ -284,7 +328,7 @@ export class UserResolver {
 
 		redisClient.del(FORGOT_PASSWORD_PREFIX + token);
 
-		const user = await User.findOne({ id: userId });
+		const user = (await getConnection().query(`SELECT * FROM "user" WHERE "userId" = ${userId}`))[0];
 		if (!user) {
 			return {
 				success: false,
@@ -292,11 +336,8 @@ export class UserResolver {
 			};
 		}
 
-		// unexpectedly this actually produces fewer SQL statements overall than updating 'user' then flushing
-		await User.update(
-			{ id: userId },
-			{ password: await argon2.hash(newPassword) }
-		);
+		const hashedPassword = await argon2.hash(newPassword)
+		await getConnection().query(`UPDATE "user" SET password = '${hashedPassword}' WHERE "userId" = ${userId}`)
 
 		return {
 			success: true,

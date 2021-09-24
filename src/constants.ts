@@ -3,3 +3,9 @@ export const COOKIE_NAME= "qid";
 export const FORGOT_PASSWORD_PREFIX = "forgot-password:"
 export const FRONT_END_URL = "http://localhost:3000/"
 export const RECOMMENDER_API_BASE_URL = "http://localhost:8000/"
+export const REGEX_PATTERNS = {
+    hasNumber: /\d/,
+    hasNoSymbols: /^[a-zA-Z0-9 ]*$/,
+    hasUppercase: /[A-Z]/,
+    hasLowercase: /[a-z]/,
+}

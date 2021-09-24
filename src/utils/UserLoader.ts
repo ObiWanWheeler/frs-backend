@@ -6,7 +6,7 @@ export const createUserLoader = () =>
 		const users = await User.findByIds(uids as number[]);
 		const userIdToUser: Record<number, User> = {};
 		users.forEach((u) => {
-			userIdToUser[u.id] = u;
+			userIdToUser[u.userId] = u;
 		});
 
 		return uids.map((uid) => userIdToUser[uid]);

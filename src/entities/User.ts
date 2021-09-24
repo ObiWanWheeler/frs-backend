@@ -8,8 +8,8 @@ import { Rating } from "./Ratings";
 @Entity()
 export class User extends BaseEntity {
 	@Field(() => Int)
-	@PrimaryGeneratedColumn({ name: "user_id" })
-	id!: number;
+	@PrimaryGeneratedColumn()
+	userId!: number;
 
 	@Field(() => String)
 	@Column({ unique: true })

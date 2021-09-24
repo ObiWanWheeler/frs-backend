@@ -19,25 +19,25 @@ export class RatingResolver {
 		if (!userId) {
 			return {
 				success: false,
-				message: "No user currently logged in, log in to rate."
-			}
+				message: "No user currently logged in, log in to rate.",
+			};
 		}
 
-		const rating = await Rating.findOne({
-			where: { animeId, userId },
-		});
+		const rating = await getConnection().query(
+			`SELECT * FROM rating WHERE "animeId" = ${animeId} AND "userId" = ${userId} LIMIT 1`
+		);
 
 		// user hasn't rated yet
 		if (!rating) {
 			await getConnection().transaction(async (tm) => {
 				tm.query(
 					`
-					INSERT INTO rating (user_id, anime_id, rating)
+					INSERT INTO rating ("userId", "animeId", rating)
 					values(${userId}, ${animeId}, ${value});
 			
 					UPDATE anime
-					SET rating = (SELECT AVG(rating) FROM rating WHERE anime_id = ${animeId})
-					WHERE anime_id = ${animeId};
+					SET rating = (SELECT AVG(rating) FROM rating WHERE "animeId" = ${animeId})
+					WHERE "animeId" = ${animeId};
 					`
 				);
 			});
@@ -54,11 +54,11 @@ export class RatingResolver {
 					`
 					UPDATE rating
 					SET rating = ${value}
-					WHERE anime_id = ${animeId} and user_id = ${userId};
+					WHERE "animeId" = ${animeId} and "userId" = ${userId};
 
 					UPDATE anime
-					SET rating = (SELECT AVG(rating) FROM rating WHERE anime_id = ${animeId})
-					WHERE anime_id = ${animeId};
+					SET rating = (SELECT AVG(rating) FROM rating WHERE "animeId" = ${animeId})
+					WHERE "animeId" = ${animeId};
 					`
 				);
 			});

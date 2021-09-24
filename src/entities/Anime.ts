@@ -22,7 +22,7 @@ type titleImageType = {
 @Entity({ name: "anime", synchronize: false })
 export class Anime extends BaseEntity {
 	@Field(() => Int)
-	@PrimaryGeneratedColumn({ name: "anime_id" })
+	@PrimaryGeneratedColumn()
 	animeId!: number;
 
 	@Field(() => String)

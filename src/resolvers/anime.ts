@@ -8,6 +8,7 @@ import { getConnection } from "typeorm";
 export class AnimeResolver {
 	@FieldResolver(() => String)
 	titleImage(@Root() root: Anime, @Arg("size", () => ImageSize) size: ImageSize) {
+		console.log(root)
 		if (!root.titleImage) {
 			return "no title image of this size available."
 		}
@@ -16,6 +17,7 @@ export class AnimeResolver {
 		}
 	}
 
+	// docs recommend to use a field resolver to get relations rather than use a join
 	@FieldResolver(() => [Rating])
 	async ratings(@Root() root: Anime) {
 		return (await getConnection().query(`SELECT * FROM rating WHERE "animeId" = ${root.animeId}`)) as Rating[]
@@ -23,6 +25,9 @@ export class AnimeResolver {
 
 	@Query(() => Anime)
 	async anime(@Arg("animeId") animeId: number): Promise<Anime | undefined> {
-		return (await getConnection().query(`SELECT * FROM anime WHERE "animeId" = ${animeId}`))[0] as Anime
+		console.log("HERE")
+		const c = (await getConnection().query(`SELECT * FROM anime WHERE "animeId" = ${animeId}`))[0] as Anime
+		console.log(c)
+		return c
 	}
 }

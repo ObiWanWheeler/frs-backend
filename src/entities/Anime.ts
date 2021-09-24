@@ -53,7 +53,7 @@ export class Anime extends BaseEntity {
 	@Column({ nullable: true })
 	synopsis: string;
 
-	@Column({ name: "titleimage", type: "json", nullable: true })
+	@Column({ type: "json", nullable: true })
 	titleImage: titleImageType;
 
 	@OneToMany(() => Rating, (rating) => rating.anime)

@@ -1,5 +1,4 @@
 import argon2 from "argon2";
-import nodemailer from "nodemailer";
 import { Anime } from "../entities/Anime";
 import { MyContext } from "src/types";
 import {
@@ -11,11 +10,8 @@ import {
 	Resolver,
 	Root,
 } from "type-graphql";
-import { v4 } from "uuid";
 import {
 	COOKIE_NAME,
-	FORGOT_PASSWORD_PREFIX,
-	FRONT_END_URL,
 	RECOMMENDER_API_BASE_URL,
 } from "../constants";
 import { User } from "../entities/User";
@@ -25,14 +21,14 @@ import {
 } from "../typeorm-types/input-types";
 import {
 	BoolWithMessageResponse,
-	ChangePasswordResponse,
 	UserResponse,
 } from "../typeorm-types/object-types";
 import { validateRegister } from "../utils/validateRegister";
+// @ts-ignore
 import fetch from "node-fetch";
-import { plainToClass } from "class-transformer";
 import { Rating } from "../entities/Ratings";
 import { getConnection } from "typeorm";
+import { typeAnimeResponse } from "../utils/typeRecommendationResponse";
 
 @Resolver(User)
 export class UserResolver {
@@ -54,27 +50,27 @@ export class UserResolver {
 
 	@Query(() => UserResponse)
 	async me(@Ctx() { req }: MyContext): Promise<UserResponse> {
-		const userId = req.session.userId;
+		const currentUserId = req.session.userId;
 
-		if (!userId) {
+		if (!currentUserId) {
 			return {
 				errors: [{ message: "no userID found in session" }],
 			};
 		}
 
-		const user = await getConnection().query(
-			`SELECT * FROM "user" WHERE "userId" = ${userId}`
+		const currentUser = await getConnection().query(
+			`SELECT * FROM "user" WHERE "userId" = ${currentUserId}`
 		);
 
-		return user
-			? { user: user[0] }
-			: { errors: [{ message: "error fetching user" }] };
+		return currentUser
+			? { user: currentUser[0] }
+			: { errors: [{ message: "error fetching current user" }] };
 	}
 
 	@Query(() => [Anime])
 	async recommend(
 		@Arg("verbose", { nullable: true }) verbose: boolean,
-		@Arg("topn", { nullable: true }) topn: number,
+		@Arg("recommendationCount", { nullable: true }) recommendationCount: number,
 		@Ctx() { req }: MyContext
 	): Promise<Anime[]> {
 		const userId = req.session.userId;
@@ -89,24 +85,15 @@ export class UserResolver {
 			endpoint += `verbose=${verbose}`;
 		}
 
-		if (topn) {
-			endpoint += `&topn=${topn}`;
+		if (recommendationCount) {
+			endpoint += `&recommendation_count=${recommendationCount}`;
 		}
-
-		console.log(endpoint);
-
+		console.log("Fetching Data... from " + endpoint)
 		const recommendationsResp = await fetch(endpoint);
-
+		console.log("Data Fetched")
 		const recommendationsJson = await recommendationsResp.json();
-		console.log(recommendationsJson);
-
-		const typedRecommendations: Anime[] = [];
-		recommendationsJson.recommendations.forEach((anime: any) =>
-			typedRecommendations.push(
-				plainToClass(Anime, { animeId: anime.anime_id, ...anime })
-			)
-		);
-		console.log(typedRecommendations);
+		
+		const typedRecommendations = typeAnimeResponse(recommendationsJson.recommendations);
 		return typedRecommendations;
 	}
 
@@ -249,99 +236,5 @@ export class UserResolver {
 			})
 		);
 	}
-
-	@Mutation(() => BoolWithMessageResponse)
-	async forgotPassword(
-		@Arg("email") email: string,
-		@Ctx() { mailer, redisClient }: MyContext
-	): Promise<BoolWithMessageResponse> {
-		const user = (await getConnection().query(`SELECT * FROM "user" WHERE email = '${email}'`))[0];
-		if (!user) {
-			return {
-				success: true,
-				message:
-					"if a user with this email exists, a password reset email has been sent to their inbox",
-			};
-		}
-
-		const token = v4();
-		await redisClient.set(
-			FORGOT_PASSWORD_PREFIX + token,
-			user.userId,
-			"ex",
-			1000 * 60 * 60
-		); // expires after 1 hour
-
-		let mailInfo: any;
-		try {
-			mailInfo = await mailer.sendMail({
-				from: '"Dev-Chan" <Devchan@cool.com>',
-				to: user.email,
-				subject: "Password Reset",
-				html: `<a href='${FRONT_END_URL}/change_password/${token}'>click here to reset your password</a>`,
-			});
-		} catch {
-			return {
-				success: false,
-				message:
-					"error sending password reset email, try again in a few minutes",
-			};
-		}
-
-		console.log(
-			"Message Preview: ",
-			nodemailer.getTestMessageUrl(mailInfo)
-		);
-
-		return {
-			success: true,
-			message:
-				"if a user with this email exists, a password reset email has been sent to their inbox",
-		};
-	}
-
-	@Mutation(() => ChangePasswordResponse)
-	async changePassword(
-		@Arg("token") token: string,
-		@Arg("newPassword") newPassword: string,
-		@Ctx() { redisClient }: MyContext
-	): Promise<ChangePasswordResponse> {
-		if (newPassword.length < 8) {
-			return {
-				success: false,
-				field: "password",
-				message: "Password too weak",
-			};
-		}
-
-		const userId = Number(
-			await redisClient.get(FORGOT_PASSWORD_PREFIX + token)
-		);
-
-		if (!userId /*token has expired*/) {
-			return {
-				success: false,
-				message:
-					"This password reset token has expired!\n(Or maybe it just didn't exist in the first place)",
-			};
-		}
-
-		redisClient.del(FORGOT_PASSWORD_PREFIX + token);
-
-		const user = (await getConnection().query(`SELECT * FROM "user" WHERE "userId" = ${userId}`))[0];
-		if (!user) {
-			return {
-				success: false,
-				message: "This user no longer exists!",
-			};
-		}
-
-		const hashedPassword = await argon2.hash(newPassword)
-		await getConnection().query(`UPDATE "user" SET password = '${hashedPassword}' WHERE "userId" = ${userId}`)
-
-		return {
-			success: true,
-			message: "Password changed",
-		};
-	}
 }
+

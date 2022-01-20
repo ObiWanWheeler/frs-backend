@@ -1,5 +1,6 @@
 import { User } from "../entities/User";
 import { ObjectType, Field } from "type-graphql";
+import { Anime } from "../entities/Anime";
 
 @ObjectType()
 export class FieldError {
@@ -33,7 +34,10 @@ export class BoolWithMessageResponse {
 }
 
 @ObjectType()
-export class ChangePasswordResponse extends BoolWithMessageResponse {
-	@Field(() => String, { nullable: true })
-	field?: string;
+export class AnimePaginationResponse {
+	@Field(() => [Anime])
+	animes: Anime[]
+
+	@Field(() => Boolean)
+	allFetched: boolean
 }

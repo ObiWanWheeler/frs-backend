@@ -66,4 +66,7 @@ export class Anime extends BaseEntity {
 	@Field(() => String)
 	@UpdateDateColumn()
 	updatedAt: Date;
+
+	@Field(() => String)
+	synopsisSnippet: string
 }

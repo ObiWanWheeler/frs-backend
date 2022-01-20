@@ -9,6 +9,6 @@ export enum ImageSize {
 }
 
 registerEnumType(ImageSize, {
-	name: "UpdootDirection",
-	description: "UP or DOWN",
+	name: "ImageSize",
+	description: "tiny, large, small, medium or original",
 });

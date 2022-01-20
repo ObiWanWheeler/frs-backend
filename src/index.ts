@@ -1,23 +1,21 @@
-import { ApolloServer } from "apollo-server-express";
+import {ApolloServer} from "apollo-server-express";
 import connectRedis from "connect-redis";
 import cors from "cors";
 import express from "express";
 import session from "express-session";
 import Redis from "ioredis";
-import nodemailer from "nodemailer";
 import path from "path";
 import "reflect-metadata";
-import { buildSchema } from "type-graphql";
-import { createConnection } from "typeorm";
-import { COOKIE_NAME, FRONT_END_URL, __prod__ } from "./constants";
-import { Anime } from "./entities/Anime";
-import { Rating } from "./entities/Ratings";
-import { User } from "./entities/User";
-import { AnimeResolver } from "./resolvers/anime";
-import { RatingResolver } from "./resolvers/ratings";
-import { UserResolver } from "./resolvers/user";
-import { MyContext } from "./types";
-import { createUserLoader } from "./utils/UserLoader";
+import {buildSchema} from "type-graphql";
+import {createConnection} from "typeorm";
+import {__prod__, COOKIE_NAME} from "./constants";
+import {Anime} from "./entities/Anime";
+import {Rating} from "./entities/Ratings";
+import {User} from "./entities/User";
+import {AnimeResolver} from "./resolvers/anime";
+import {RatingResolver} from "./resolvers/ratings";
+import {UserResolver} from "./resolvers/user";
+import {MyContext} from "./types";
 
 const main = async () => {
 	const conn = await createConnection({
@@ -31,19 +29,14 @@ const main = async () => {
 		entities: [User, Anime, Rating],
 	});
 
-	conn.runMigrations();
-
-	const mailer = await createMailerClient();
+	await conn.runMigrations();
 
 	const app = express();
 
 	const RedisStore = connectRedis(session);
 	const redisClient = new Redis();
 	app.use(
-		cors({
-			origin: FRONT_END_URL,
-			credentials: true,
-		})
+		cors()
 	);
 	app.use(
 		session({
@@ -72,9 +65,7 @@ const main = async () => {
 		context: ({ req, res }: any): MyContext => ({
 			req,
 			res,
-			mailer,
 			redisClient,
-			userLoader: createUserLoader(), 
 		}),
 	});
 
@@ -86,16 +77,4 @@ const main = async () => {
 };
 
 main().catch((err) => console.log(err));
-async function createMailerClient() {
-	const testAccount = await nodemailer.createTestAccount();
-	const transporter = nodemailer.createTransport({
-		host: "smtp.ethereal.email",
-		port: 587,
-		secure: false,
-		auth: {
-			user: testAccount.user,
-			pass: testAccount.pass,
-		},
-	});
-	return transporter;
-}
+

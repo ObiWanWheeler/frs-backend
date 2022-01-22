@@ -1,4 +1,4 @@
-import {ApolloServer} from "apollo-server-express";
+import { ApolloServer } from "apollo-server-express";
 import connectRedis from "connect-redis";
 import cors from "cors";
 import express from "express";
@@ -6,16 +6,16 @@ import session from "express-session";
 import Redis from "ioredis";
 import path from "path";
 import "reflect-metadata";
-import {buildSchema} from "type-graphql";
-import {createConnection} from "typeorm";
-import {__prod__, COOKIE_NAME} from "./constants";
-import {Anime} from "./entities/Anime";
-import {Rating} from "./entities/Ratings";
-import {User} from "./entities/User";
-import {AnimeResolver} from "./resolvers/anime";
-import {RatingResolver} from "./resolvers/ratings";
-import {UserResolver} from "./resolvers/user";
-import {MyContext} from "./types";
+import { buildSchema } from "type-graphql";
+import { createConnection } from "typeorm";
+import { __prod__, COOKIE_NAME, FRONT_END_URL } from "./constants";
+import { Anime } from "./entities/Anime";
+import { Rating } from "./entities/Ratings";
+import { User } from "./entities/User";
+import { AnimeResolver } from "./resolvers/anime";
+import { RatingResolver } from "./resolvers/ratings";
+import { UserResolver } from "./resolvers/user";
+import { MyContext } from "./types";
 
 const main = async () => {
 	const conn = await createConnection({
@@ -35,9 +35,10 @@ const main = async () => {
 
 	const RedisStore = connectRedis(session);
 	const redisClient = new Redis();
-	app.use(
-		cors()
-	);
+	app.use(cors({
+		origin: FRONT_END_URL,
+		credentials: true,
+	}));
 	app.use(
 		session({
 			name: COOKIE_NAME,
@@ -71,10 +72,9 @@ const main = async () => {
 
 	apolloServer.applyMiddleware({ app, cors: false });
 
-	app.listen(5000, () => {
-		console.log("server started on localhost:5000");
+	app.listen(2000, () => {
+		console.log("server started on localhost:2000");
 	});
 };
 
 main().catch((err) => console.log(err));
-

@@ -51,6 +51,7 @@ export class UserResolver {
 	@Query(() => UserResponse)
 	async me(@Ctx() { req }: MyContext): Promise<UserResponse> {
 		const currentUserId = req.session.userId;
+		console.log(req.session)
 
 		if (!currentUserId) {
 			return {
@@ -200,7 +201,7 @@ export class UserResolver {
 
 		if (!requestedUser?.userId) {
 			return {
-				errors: [{ field: "username", message: "error logging in" }],
+				errors: [{ message: "error logging in" }],
 			};
 		}
 		const passwordIsValid = await argon2.verify(
@@ -209,11 +210,11 @@ export class UserResolver {
 		);
 		if (!passwordIsValid) {
 			return {
-				errors: [{ field: "username", message: "error logging in" }],
+				errors: [{ message: "error logging in" }],
 			};
 		}
 		req.session.userId = requestedUser.userId; // set cookie
-
+		console.log(req.session)
 		return {
 			user: requestedUser,
 		};

@@ -1,5 +1,13 @@
 import { ImageSize } from "../typeorm-types/enums";
-import { Arg, FieldResolver, Int, Query, Resolver, Root } from "type-graphql";
+import {
+	Arg,
+	FieldResolver,
+	Float,
+	Int,
+	Query,
+	Resolver,
+	Root,
+} from "type-graphql";
 import { Anime } from "../entities/Anime";
 import { Rating } from "../entities/Ratings";
 import { getConnection } from "typeorm";
@@ -14,10 +22,12 @@ export class AnimeResolver {
 	@FieldResolver(() => String)
 	titleImage(
 		@Root() root: Anime,
-		@Arg("size", () => ImageSize, {nullable: true}) size: ImageSize
+		@Arg("size", () => ImageSize, { nullable: true }) size: ImageSize
 	) {
 		if (!size) {
-			return root.titleImage.medium ? root.titleImage.medium : root.titleImage.small
+			return root.titleImage.medium
+				? root.titleImage.medium
+				: root.titleImage.small;
 		}
 		if (!root.titleImage) {
 			return "no title image of this size available.";
@@ -35,14 +45,16 @@ export class AnimeResolver {
 	}
 
 	@FieldResolver(() => String)
-	synopsisSnippet(
-		@Root() root: Anime
-	) {
-		return root.synopsis.slice(0, Math.min(100, root.synopsis.length)) + "...";
+	synopsisSnippet(@Root() root: Anime) {
+		return (
+			root.synopsis.slice(0, Math.min(100, root.synopsis.length)) + "..."
+		);
 	}
 
 	@Query(() => Anime)
-	async anime(@Arg("animeId", () => Int) animeId: number): Promise<Anime | undefined> {
+	async anime(
+		@Arg("animeId", () => Int) animeId: number
+	): Promise<Anime | undefined> {
 		return (
 			await getConnection().query(
 				`SELECT * FROM anime WHERE "animeId" = ${animeId}`
@@ -59,30 +71,35 @@ export class AnimeResolver {
 	// cursor is a maximum rating
 	async someAnimes(
 		@Arg("limit", () => Int) limit: number,
-		@Arg("cursor", () => Int, { nullable: true }) cursor: number
+		@Arg("cursor", () => Float, { nullable: true }) cursor: number
 	) {
 		if (!cursor) {
 			const response = await fetch(
 				`${RECOMMENDER_API_BASE_URL}/popularity-recommender?recommendationCount=${limit}&verbose=True`
 			);
 			const responseJson = await response.json();
-			console.log(responseJson)
-			const typedResponse = typeAnimeResponse(responseJson.recommendations);
+			const typedResponse = typeAnimeResponse(
+				responseJson.recommendations
+			);
 			return {
 				animes: typedResponse,
-				allFetched: false
+				allFetched: false,
 			};
-		}
-
-		const effectiveLimit = Math.min(MAX_ANIME_FETCH_LIMIT, limit);
-		const animes = await getConnection().query(
-			`SELECT * FROM anime WHERE rating < ${cursor} ORDER BY rating DESC LIMIT ${effectiveLimit}`
-		);
-		const allFetched = animes.length < effectiveLimit + 1
-
-		return {
-			animes,
-			allFetched
+		} else {
+			const effectiveLimit = Math.min(MAX_ANIME_FETCH_LIMIT, limit);
+			const animes = await getConnection().query(
+				`SELECT * FROM anime WHERE rating < ${cursor} ORDER BY rating DESC LIMIT ${effectiveLimit}`
+			);
+			const allFetched = animes.length < effectiveLimit;
+			animes.forEach((anime: Anime) => {
+				if (!anime.synopsis) {
+					console.log(anime)
+				}
+			});
+			return {
+				animes,
+				allFetched,
+			};
 		}
 	}
 }

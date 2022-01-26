@@ -29,8 +29,10 @@ export class AnimeResolver {
 				? root.titleImage.medium
 				: root.titleImage.small;
 		}
-		if (!root.titleImage) {
-			return "no title image of this size available.";
+		if (!root.titleImage[size]) {
+			return root.titleImage.medium
+				? root.titleImage.medium
+				: root.titleImage.small;
 		} else {
 			return root.titleImage[size];
 		}
@@ -45,9 +47,9 @@ export class AnimeResolver {
 	}
 
 	@FieldResolver(() => String)
-	synopsisSnippet(@Root() root: Anime) {
+	synopsisSnippet(@Root() root: Anime, @Arg("maxLength", () => Int, {nullable: true}) maxLength: number) {
 		return (
-			root.synopsis.slice(0, Math.min(100, root.synopsis.length)) + "..."
+			root.synopsis.slice(0, Math.min(maxLength, root.synopsis.length)) + "..."
 		);
 	}
 

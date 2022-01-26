@@ -1,5 +1,5 @@
 import { MyContext } from "src/types";
-import { Arg, Ctx, Int, Mutation, Resolver, UseMiddleware } from "type-graphql";
+import { Arg, Ctx, FieldResolver, Float, Int, Mutation, Resolver, Root, UseMiddleware } from "type-graphql";
 import { Entity, getConnection } from "typeorm";
 import { Rating } from "../entities/Ratings";
 import { isAuth } from "../middleware/isAuth";
@@ -8,11 +8,18 @@ import { BoolWithMessageResponse } from "../typeorm-types/object-types";
 @Entity()
 @Resolver(Rating)
 export class RatingResolver {
+	@FieldResolver()
+	async anime(@Root() root: Rating) {
+		const response = (await getConnection().query(`SELECT * FROM anime WHERE "animeId" = ${root.animeId}`))
+	
+		return response[0]
+	}
+
 	@Mutation(() => BoolWithMessageResponse)
 	@UseMiddleware(isAuth)
 	async rate(
 		@Arg("animeId", () => Int) animeId: number,
-		@Arg("value", () => Int) value: number,
+		@Arg("value", () => Float) value: number,
 		@Ctx() { req }: MyContext
 	): Promise<BoolWithMessageResponse> {
 		const userId = req.session.userId;
@@ -23,21 +30,28 @@ export class RatingResolver {
 			};
 		}
 
+		const anime = await getConnection().query(
+			`SELECT * FROM anime WHERE "animeId" = ${animeId};`
+		)
+		
+		if (anime.length==0) {
+			return {
+				success: false,
+				message: `No anime with id: ${animeId} exists.`
+			}
+		}
+
 		const rating = await getConnection().query(
-			`SELECT * FROM rating WHERE "animeId" = ${animeId} AND "userId" = ${userId} LIMIT 1`
+			`SELECT * FROM rating WHERE "animeId" = ${animeId} AND "userId" = ${userId} LIMIT 1;`
 		);
 
 		// user hasn't rated yet
-		if (!rating) {
+		if (rating.length==0) {
 			await getConnection().transaction(async (tm) => {
 				tm.query(
 					`
 					INSERT INTO rating ("userId", "animeId", rating)
 					values(${userId}, ${animeId}, ${value});
-			
-					UPDATE anime
-					SET rating = (SELECT AVG(rating) FROM rating WHERE "animeId" = ${animeId})
-					WHERE "animeId" = ${animeId};
 					`
 				);
 			});
@@ -55,10 +69,6 @@ export class RatingResolver {
 					UPDATE rating
 					SET rating = ${value}
 					WHERE "animeId" = ${animeId} and "userId" = ${userId};
-
-					UPDATE anime
-					SET rating = (SELECT AVG(rating) FROM rating WHERE "animeId" = ${animeId})
-					WHERE "animeId" = ${animeId};
 					`
 				);
 			});

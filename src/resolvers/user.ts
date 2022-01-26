@@ -1,10 +1,10 @@
 import argon2 from "argon2";
-import { Anime } from "../entities/Anime";
 import { MyContext } from "src/types";
 import {
 	Arg,
 	Ctx,
 	FieldResolver,
+	Int,
 	Mutation,
 	Query,
 	Resolver,
@@ -21,6 +21,7 @@ import {
 } from "../typeorm-types/input-types";
 import {
 	BoolWithMessageResponse,
+	RecommendationFetchResponse,
 	UserResponse,
 } from "../typeorm-types/object-types";
 import { validateRegister } from "../utils/validateRegister";
@@ -51,7 +52,6 @@ export class UserResolver {
 	@Query(() => UserResponse)
 	async me(@Ctx() { req }: MyContext): Promise<UserResponse> {
 		const currentUserId = req.session.userId;
-		console.log(req.session)
 
 		if (!currentUserId) {
 			return {
@@ -68,16 +68,16 @@ export class UserResolver {
 			: { errors: [{ message: "error fetching current user" }] };
 	}
 
-	@Query(() => [Anime])
+	@Query(() => RecommendationFetchResponse)
 	async recommend(
 		@Arg("verbose", { nullable: true }) verbose: boolean,
-		@Arg("recommendationCount", { nullable: true }) recommendationCount: number,
+		@Arg("recommendationCount", () => Int, { nullable: true }) recommendationCount: number,
 		@Ctx() { req }: MyContext
-	): Promise<Anime[]> {
+	): Promise<RecommendationFetchResponse> {
 		const userId = req.session.userId;
 
 		if (!userId) {
-			return [];
+			return { errors: ["no user logged in."], animes: [] };
 		}
 
 		let endpoint = `${RECOMMENDER_API_BASE_URL}hybrid-recommender/${userId}?`;
@@ -87,15 +87,18 @@ export class UserResolver {
 		}
 
 		if (recommendationCount) {
-			endpoint += `&recommendation_count=${recommendationCount}`;
+			endpoint += `&recommendationCount=${recommendationCount}`;
 		}
 		console.log("Fetching Data... from " + endpoint)
 		const recommendationsResp = await fetch(endpoint);
 		console.log("Data Fetched")
+		console.log(recommendationsResp)
 		const recommendationsJson = await recommendationsResp.json();
-		
+		if (recommendationsJson.error) {
+			return {errors: [recommendationsJson.error], animes: []}
+		}
 		const typedRecommendations = typeAnimeResponse(recommendationsJson.recommendations);
-		return typedRecommendations;
+		return {errors: [], animes: typedRecommendations};
 	}
 
 	@Mutation(() => UserResponse)
@@ -214,7 +217,6 @@ export class UserResolver {
 			};
 		}
 		req.session.userId = requestedUser.userId; // set cookie
-		console.log(req.session)
 		return {
 			user: requestedUser,
 		};

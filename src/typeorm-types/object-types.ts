@@ -41,3 +41,12 @@ export class AnimePaginationResponse {
 	@Field(() => Boolean)
 	allFetched: boolean
 }
+
+@ObjectType()
+export class RecommendationFetchResponse {
+	@Field(() => [String])
+	errors: string[]
+
+	@Field(() => [Anime]) 
+	animes: Anime[]
+}

@@ -3,7 +3,7 @@ import { Arg, Ctx, FieldResolver, Float, Int, Mutation, Resolver, Root, UseMiddl
 import { Entity, getConnection } from "typeorm";
 import { Rating } from "../entities/Ratings";
 import { isAuth } from "../middleware/isAuth";
-import { BoolWithMessageResponse } from "../typeorm-types/object-types";
+import { BoolWithMessageResponse } from "../typeorm-types/object-types/BoolWithMessageResponse";
 
 @Entity()
 @Resolver(Rating)

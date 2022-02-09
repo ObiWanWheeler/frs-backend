@@ -1,6 +1,6 @@
 import { REGEX_PATTERNS } from "../constants";
-import { RegisterInput } from "src/typeorm-types/input-types";
-import { UserFieldError } from "src/typeorm-types/object-types";
+import { RegisterInput } from "src/typeorm-types/input-types/RegisterInput";
+import { UserFieldError } from "src/typeorm-types/object-types/UserFieldError";
 
 export const validateRegister = ({
 	email,

@@ -1,4 +1,4 @@
-import { ImageSize } from "../typeorm-types/enums";
+import { ImageSize } from "../typeorm-types/enums/ImageSize";
 import {
 	Arg,
 	FieldResolver,
@@ -15,7 +15,7 @@ import { MAX_ANIME_FETCH_LIMIT, RECOMMENDER_API_BASE_URL } from "../constants";
 // @ts-ignore
 import fetch from "node-fetch";
 import { typeAnimeResponse } from "../utils/typeRecommendationResponse";
-import { AnimePaginationResponse } from "../typeorm-types/object-types";
+import { AnimePaginationResponse } from "../typeorm-types/object-types/AnimePaginationResponse";
 
 @Resolver(Anime)
 export class AnimeResolver {

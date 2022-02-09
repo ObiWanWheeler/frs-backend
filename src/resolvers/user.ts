@@ -14,22 +14,19 @@ import {
 	COOKIE_NAME,
 	RECOMMENDER_API_BASE_URL,
 } from "../constants";
-import { User } from "../entities/User";
-import {
-	RegisterInput,
-	UsernamePasswordInput,
-} from "../typeorm-types/input-types";
-import {
-	BoolWithMessageResponse,
-	RecommendationFetchResponse,
-	UserResponse,
-} from "../typeorm-types/object-types";
-import { validateRegister } from "../utils/validateRegister";
+
 // @ts-ignore
 import fetch from "node-fetch";
 import { Rating } from "../entities/Ratings";
 import { getConnection } from "typeorm";
 import { typeAnimeResponse } from "../utils/typeRecommendationResponse";
+import { User } from "../entities/User";
+import { RegisterInput } from "../typeorm-types/input-types/RegisterInput";
+import { UsernamePasswordInput } from "../typeorm-types/input-types/UsernamePasswordInput";
+import { BoolWithMessageResponse } from "../typeorm-types/object-types/BoolWithMessageResponse";
+import { RecommendationFetchResponse } from "../typeorm-types/object-types/RecommendationFetchResponse";
+import { UserResponse } from "../typeorm-types/object-types/UserResponse";
+import { validateRegister } from "../utils/validateRegister";
 
 @Resolver(User)
 export class UserResolver {
@@ -52,7 +49,6 @@ export class UserResolver {
 	@Query(() => UserResponse)
 	async me(@Ctx() { req }: MyContext): Promise<UserResponse> {
 		const currentUserId = req.session.userId;
-
 		if (!currentUserId) {
 			return {
 				errors: [{ message: "no userID found in session" }],

@@ -5,7 +5,7 @@ export enum ImageSize {
 	LARGE = "large",
 	SMALL = "small",
 	MEDIUM = "medium",
-	ORIGINAL = "original",
+	ORIGINAL = "original"
 }
 
 registerEnumType(ImageSize, {
